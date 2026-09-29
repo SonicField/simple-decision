@@ -28,8 +28,8 @@ make install PREFIX=/usr DESTDIR="$package_root"
 ```
 
 The supported platforms are Linux and macOS on x86-64 and ARM64. The CI matrix
-builds and tests those four platform/architecture combinations; Linux is
-tested with both GCC and Clang.
+is configured to build and test those four platform/architecture combinations;
+Linux is tested with both GCC and Clang.
 
 ## Record a decision
 
