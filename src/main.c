@@ -217,10 +217,18 @@ static int dispatch(int argc, char **argv)
     }
     if (strcmp(argv[1], "help") == 0 || strcmp(argv[1], "--help") == 0 ||
         strcmp(argv[1], "-h") == 0) {
+        if (argc != 2) {
+            fprintf(stderr, "simple-decision: help accepts no arguments\n");
+            return SD_BAD_ARGS;
+        }
         usage(stdout);
         return SD_OK;
     }
     if (strcmp(argv[1], "version") == 0 || strcmp(argv[1], "--version") == 0) {
+        if (argc != 2) {
+            fprintf(stderr, "simple-decision: version accepts no arguments\n");
+            return SD_BAD_ARGS;
+        }
         puts("simple-decision " SIMPLE_DECISION_VERSION);
         return SD_OK;
     }

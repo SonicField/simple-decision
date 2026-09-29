@@ -110,6 +110,10 @@ expect_status 4 "$PROGRAM" add "$tmp/link.md" Summary \
 expect_status 4 "$PROGRAM" add "$tmp/duplicate-option.md" Summary \
     --participants=Alex --participants=Sam --rationale=Why
 expect_status 4 "$PROGRAM" unknown
+expect_status 4 "$PROGRAM" help extra
+expect_status 4 "$PROGRAM" version extra
+expect_status 4 "$PROGRAM" --help extra
+expect_status 4 "$PROGRAM" --version extra
 
 if grep -R -n -E 'nbs-bus|\.nbs|auto.archive' src >/dev/null 2>&1; then
     bad 'source contains an NBS or auto-archive dependency'

@@ -18,6 +18,9 @@ simple-decision help
 simple-decision version
 ```
 
+`help` and `version` (including their `--help`, `-h`, and `--version` aliases)
+accept no additional arguments.
+
 `add` accepts these optional fields:
 
 ```text
