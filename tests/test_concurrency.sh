@@ -76,6 +76,43 @@ grep -q '^OK: 65 decisions$' "$tmp/stdout" &&
     ok 'post-rename failure leaves one complete entry' ||
     bad 'post-rename failure left an unexpected state'
 
+cp "$log" "$tmp/before-interrupt.md"
+marker="$tmp/pause-marker"
+env SIMPLE_DECISION_TEST_PAUSE_BEFORE_RENAME="$marker" "$TEST_PROGRAM" add "$log" \
+    'Interrupted write' --participants=Test --rationale='Must not become partial' \
+    >"$tmp/interrupted-stdout" 2>"$tmp/interrupted-stderr" &
+interrupted_pid=$!
+attempt=0
+while [ ! -f "$marker" ] && [ "$attempt" -lt 500 ]; do
+    sleep 0.01
+    attempt=$((attempt + 1))
+done
+if [ -f "$marker" ]; then
+    kill -KILL "$interrupted_pid"
+    set +e
+    wait "$interrupted_pid" 2>/dev/null
+    interrupted_status=$?
+    set -e
+    [ "$interrupted_status" -ne 0 ] && ok 'writer is interrupted before rename' ||
+        bad 'interrupted writer unexpectedly succeeded'
+    cmp -s "$tmp/before-interrupt.md" "$log" &&
+        ok 'interrupted writer leaves live log byte-identical' ||
+        bad 'interrupted writer changed live log'
+    run_status 0 "$PROGRAM" check "$log"
+else
+    kill -KILL "$interrupted_pid" 2>/dev/null || true
+    wait "$interrupted_pid" 2>/dev/null || true
+    bad 'writer did not reach the pre-rename interruption point'
+fi
+find "$tmp" -name '.simple-decision.tmp.*' -delete
+
+private_log="$tmp/private.md"
+(umask 077; "$PROGRAM" add "$private_log" Private \
+    --participants=Test --rationale='Respect caller permissions' >/dev/null)
+private_mode=$(stat -c %a "$private_log" 2>/dev/null || stat -f %Lp "$private_log")
+[ "$private_mode" = 600 ] && ok 'new log respects the process umask' ||
+    bad "new log mode ignored umask: $private_mode"
+
 chmod 0600 "$log"
 $PROGRAM add "$log" 'Preserve mode' --participants=Test --rationale=Mode >/dev/null
 mode=$(stat -c %a "$log" 2>/dev/null || stat -f %Lp "$log")
@@ -101,4 +138,3 @@ if [ "$failures" -ne 0 ]; then
     exit 1
 fi
 printf '%d checks passed\n' "$checks"
-

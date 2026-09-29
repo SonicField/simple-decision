@@ -96,7 +96,8 @@ may be visible; durability across immediate power loss is then unknown.
 The log and lock path themselves must not be symbolic links. Parent-directory
 symbolic links are not rejected. Readers do not take the writer lock: atomic
 rename means they see either the previous complete file or the next complete
-file.
+file. A new log's permissions respect the process umask; later transactions
+preserve the existing log's permission bits.
 
 ## Limits
 
@@ -119,4 +120,3 @@ Visually similar strings may therefore remain distinct.
 | 2 | The log is structurally invalid |
 | 3 | Requested decision does not exist |
 | 4 | Invalid command-line arguments |
-

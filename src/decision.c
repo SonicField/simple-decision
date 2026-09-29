@@ -452,7 +452,13 @@ static int commit_log(const char *path, const char *old_data, size_t old_length,
     }
     mode_t mode = 0644;
     struct stat existing;
-    if (lstat(path, &existing) == 0) mode = existing.st_mode & 0777;
+    if (lstat(path, &existing) == 0) {
+        mode = existing.st_mode & 0777;
+    } else {
+        mode_t mask = umask(0);
+        umask(mask);
+        mode = (mode_t)(0666 & ~mask);
+    }
     int result = SD_ERROR;
     if (fchmod(fd, mode) != 0 ||
         !write_all(fd, old_data, old_length) ||
@@ -469,6 +475,22 @@ static int commit_log(const char *path, const char *old_data, size_t old_length,
     }
     fd = -1;
 #ifdef SIMPLE_DECISION_TESTING
+    const char *pause_path = getenv("SIMPLE_DECISION_TEST_PAUSE_BEFORE_RENAME");
+    if (pause_path != NULL) {
+        int marker = open(pause_path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC,
+                          0600);
+        if (marker < 0) {
+            fprintf(stderr, "simple-decision: cannot create test marker: %s\n",
+                    strerror(errno));
+            goto done;
+        }
+        if (close(marker) != 0) {
+            fprintf(stderr, "simple-decision: cannot close test marker: %s\n",
+                    strerror(errno));
+            goto done;
+        }
+        for (;;) pause();
+    }
     const char *failure = getenv("SIMPLE_DECISION_TEST_FAIL");
     if (failure != NULL && strcmp(failure, "before-rename") == 0) {
         errno = EIO;
