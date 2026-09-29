@@ -38,7 +38,10 @@ ID<TAB>STATUS<TAB>SUMMARY
 
 `--status` filters by exact status. `show` emits one canonical Markdown entry
 without its separator. `check` emits `OK: N decisions` for a valid log. Normal
-results go to standard output and diagnostics go to standard error.
+results go to standard output and diagnostics go to standard error. Every
+output-producing command flushes standard output before reporting success;
+closed descriptors and broken pipes therefore return operational status 1
+instead of being silently lost or terminating through `SIGPIPE`.
 
 ## File format
 

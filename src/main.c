@@ -1,6 +1,7 @@
 #include "decision.h"
 
 #include <inttypes.h>
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -110,11 +111,9 @@ static int command_add(int argc, char **argv)
     }
     uint64_t id;
     int result = sd_add(path, &entry, &id);
-    if (result == SD_OK) {
-        if (printf("D-%" PRIu64 "\n", id) < 0 || fflush(stdout) != 0) {
-            fprintf(stderr, "simple-decision: cannot write decision ID\n");
-            return SD_ERROR;
-        }
+    if (result == SD_OK && printf("D-%" PRIu64 "\n", id) < 0) {
+        fprintf(stderr, "simple-decision: cannot write decision ID\n");
+        return SD_ERROR;
     }
     return result;
 }
@@ -210,7 +209,7 @@ static int command_show(int argc, char **argv)
     return SD_NOT_FOUND;
 }
 
-int main(int argc, char **argv)
+static int dispatch(int argc, char **argv)
 {
     if (argc < 2) {
         usage(stderr);
@@ -231,4 +230,18 @@ int main(int argc, char **argv)
     if (strcmp(argv[1], "show") == 0) return command_show(argc, argv);
     fprintf(stderr, "simple-decision: unknown command '%s'\n", argv[1]);
     return SD_BAD_ARGS;
+}
+
+int main(int argc, char **argv)
+{
+    if (signal(SIGPIPE, SIG_IGN) == SIG_ERR) {
+        fprintf(stderr, "simple-decision: cannot configure broken-pipe handling\n");
+        return SD_ERROR;
+    }
+    int result = dispatch(argc, argv);
+    if (result == SD_OK && fflush(stdout) != 0) {
+        fprintf(stderr, "simple-decision: cannot flush standard output\n");
+        return SD_ERROR;
+    }
+    return result;
 }

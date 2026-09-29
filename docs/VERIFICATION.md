@@ -34,7 +34,7 @@ Observed locally on Linux 6.16, ARM64, with GCC 11.5:
 
 | Command | Observed result |
 |---|---|
-| `make test CC=gcc` | Passed 84 CLI/adversarial checks plus documentation checks |
+| `make test CC=gcc` | Passed 92 CLI/adversarial checks plus documentation checks |
 | `make analyze CC=gcc` | GCC `-fanalyzer` completed with warnings treated as errors |
 | `shellcheck tests/*.sh` | Completed without findings |
 | `make sanitize CC=gcc` | ASan and UBSan suite passed, including 64 concurrent writers |
@@ -56,7 +56,9 @@ The tests specifically observed:
 - a transaction producing exactly the configured maximum size succeeded, while
   one exceeding it was rejected before commit and left the log byte-identical;
 - closing standard output caused `add` to return status 1 after committing its
-  entry, and the resulting log remained valid and queryable.
+  entry, and the resulting log remained valid and queryable;
+- all six output-producing commands rejected a closed output descriptor, and
+  a real pipe with no reader returned status 1 rather than dying from SIGPIPE.
 
 ## Not yet observed
 
