@@ -15,7 +15,7 @@ HEADERS = src/decision.h
 BUILD_DIR = build
 TEST_TARGET = $(BUILD_DIR)/simple-decision-test
 
-.PHONY: all clean install test sanitize analyze
+.PHONY: all clean install test test-docs sanitize analyze
 
 all: $(TARGET)
 
@@ -29,6 +29,10 @@ test: all $(TEST_TARGET)
 	PROGRAM=./$(TARGET) sh tests/test_add.sh
 	PROGRAM=./$(TARGET) sh tests/test_query.sh
 	PROGRAM=./$(TARGET) TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
+	$(MAKE) test-docs
+
+test-docs: all
+	PROGRAM=./$(TARGET) sh tests/test_docs.sh
 
 install: $(TARGET)
 	install -d "$(DESTDIR)$(BINDIR)"
