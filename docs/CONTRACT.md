@@ -93,6 +93,12 @@ failure before rename leaves the previous log intact. A directory-sync error
 after rename is reported even though the new, structurally complete version
 may be visible; durability across immediate power loss is then unknown.
 
+`add` commits and synchronises the log before printing its new ID. If standard
+output is closed or fails at that final step, `add` returns status 1 even though
+the entry is already present. A caller must inspect the log before retrying an
+add whose only observed failure may have been output delivery; blind retrying
+can record the same decision twice.
+
 The log and lock path themselves must not be symbolic links. Parent-directory
 symbolic links are not rejected. Readers do not take the writer lock: atomic
 rename means they see either the previous complete file or the next complete

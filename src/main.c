@@ -110,9 +110,11 @@ static int command_add(int argc, char **argv)
     }
     uint64_t id;
     int result = sd_add(path, &entry, &id);
-    if (result == SD_OK && printf("D-%" PRIu64 "\n", id) < 0) {
-        fprintf(stderr, "simple-decision: cannot write decision ID\n");
-        return SD_ERROR;
+    if (result == SD_OK) {
+        if (printf("D-%" PRIu64 "\n", id) < 0 || fflush(stdout) != 0) {
+            fprintf(stderr, "simple-decision: cannot write decision ID\n");
+            return SD_ERROR;
+        }
     }
     return result;
 }

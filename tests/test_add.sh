@@ -76,6 +76,28 @@ $PROGRAM add "$unicode_log" 'Prefer café ☕' \
     --participants='Zoë' --rationale='Readable 世界.' >/dev/null
 grep -q 'Prefer café ☕' "$unicode_log" && ok 'valid UTF-8 is preserved' || bad 'UTF-8 was changed'
 
+closed_stdout_log="$tmp/closed-stdout.md"
+"$PROGRAM" add "$closed_stdout_log" 'Committed without returned ID' \
+    --participants=Test --rationale='Exercise stdout failure.' \
+    >/dev/null
+# Re-run with a genuinely closed descriptor rather than /dev/full so the
+# behavior is portable across Linux and macOS.
+set +e
+"$PROGRAM" add "$closed_stdout_log" 'Committed with closed stdout' \
+    --participants=Test --rationale='Caller cannot receive this ID.' \
+    1>&- 2>"$tmp/closed-error"
+closed_fd_status=$?
+set -e
+[ "$closed_fd_status" -eq 1 ] && ok 'closed stdout reports operational failure' ||
+    bad "closed stdout returned $closed_fd_status"
+grep -q '^### D-2 Committed with closed stdout$' "$closed_stdout_log" &&
+    ok 'closed stdout does not roll back committed entry' ||
+    bad 'closed stdout entry is absent'
+check_after_stdout=$($PROGRAM check "$closed_stdout_log")
+[ "$check_after_stdout" = 'OK: 2 decisions' ] &&
+    ok 'log remains valid after stdout failure' ||
+    bad "unexpected post-failure check: $check_after_stdout"
+
 expect_status 4 "$PROGRAM" add "$tmp/missing.md" Summary --participants=Alex
 expect_status 4 "$PROGRAM" add "$tmp/bad-status.md" Summary \
     --participants=Alex --rationale=Why --status=pending
