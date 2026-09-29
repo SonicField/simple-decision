@@ -274,6 +274,10 @@ int sd_load(const char *path, int allow_missing, sd_log *log)
         fprintf(stderr, "simple-decision: refusing symbolic-link log %s\n", path);
         return SD_ERROR;
     }
+    if (!S_ISREG(lst.st_mode)) {
+        fprintf(stderr, "simple-decision: %s is not a regular file\n", path);
+        return SD_ERROR;
+    }
     int fd = open(path, O_RDONLY | O_CLOEXEC | O_NOFOLLOW);
     if (fd < 0) {
         fprintf(stderr, "simple-decision: cannot open %s: %s\n",
@@ -446,8 +450,11 @@ static int commit_log(const char *path, const char *old_data, size_t old_length,
                 strerror(errno));
         return SD_ERROR;
     }
+    mode_t mode = 0644;
+    struct stat existing;
+    if (lstat(path, &existing) == 0) mode = existing.st_mode & 0777;
     int result = SD_ERROR;
-    if (fchmod(fd, 0644) != 0 ||
+    if (fchmod(fd, mode) != 0 ||
         !write_all(fd, old_data, old_length) ||
         !write_all(fd, addition, addition_length) || fsync(fd) != 0) {
         fprintf(stderr, "simple-decision: cannot write transaction: %s\n",
@@ -461,12 +468,27 @@ static int commit_log(const char *path, const char *old_data, size_t old_length,
         goto done;
     }
     fd = -1;
+#ifdef SIMPLE_DECISION_TESTING
+    const char *failure = getenv("SIMPLE_DECISION_TEST_FAIL");
+    if (failure != NULL && strcmp(failure, "before-rename") == 0) {
+        errno = EIO;
+        fprintf(stderr, "simple-decision: injected failure before rename\n");
+        goto done;
+    }
+#endif
     if (rename(temporary, path) != 0) {
         fprintf(stderr, "simple-decision: cannot commit transaction: %s\n",
                 strerror(errno));
         goto done;
     }
     temporary[0] = '\0';
+#ifdef SIMPLE_DECISION_TESTING
+    if (failure != NULL && strcmp(failure, "after-rename") == 0) {
+        errno = EIO;
+        fprintf(stderr, "simple-decision: injected failure after rename\n");
+        return SD_ERROR;
+    }
+#endif
     int directory_fd = open(directory, O_RDONLY | O_CLOEXEC | O_DIRECTORY);
     if (directory_fd < 0 || fsync(directory_fd) != 0) {
         fprintf(stderr, "simple-decision: cannot sync parent directory: %s\n",

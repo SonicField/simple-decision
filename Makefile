@@ -13,6 +13,7 @@ TARGET = simple-decision
 SOURCES = src/main.c src/decision.c
 HEADERS = src/decision.h
 BUILD_DIR = build
+TEST_TARGET = $(BUILD_DIR)/simple-decision-test
 
 .PHONY: all clean install test sanitize analyze
 
@@ -21,9 +22,13 @@ all: $(TARGET)
 $(TARGET): $(SOURCES) $(HEADERS)
 	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -o $@ $(SOURCES)
 
-test: all
+$(TEST_TARGET): $(SOURCES) $(HEADERS) | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -DSIMPLE_DECISION_TESTING -o $@ $(SOURCES)
+
+test: all $(TEST_TARGET)
 	PROGRAM=./$(TARGET) sh tests/test_add.sh
 	PROGRAM=./$(TARGET) sh tests/test_query.sh
+	PROGRAM=./$(TARGET) TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
 
 install: $(TARGET)
 	install -d "$(DESTDIR)$(BINDIR)"
@@ -31,9 +36,11 @@ install: $(TARGET)
 
 sanitize:
 	$(MAKE) clean
-	$(MAKE) CFLAGS='-O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer' all
+	$(MAKE) CFLAGS='-O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer' all $(TEST_TARGET)
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_add.sh
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_query.sh
+	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) \
+		TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
 
 $(BUILD_DIR):
 	mkdir -p $@
