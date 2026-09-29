@@ -29,6 +29,7 @@ test: all $(TEST_TARGET)
 	PROGRAM=./$(TARGET) sh tests/test_add.sh
 	PROGRAM=./$(TARGET) sh tests/test_query.sh
 	PROGRAM=./$(TARGET) TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
+	PROGRAM=./$(TARGET) sh tests/test_limits.sh
 	$(MAKE) test-docs
 
 test-docs: all
@@ -45,6 +46,7 @@ sanitize:
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_query.sh
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) \
 		TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
+	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_limits.sh
 
 $(BUILD_DIR):
 	mkdir -p $@

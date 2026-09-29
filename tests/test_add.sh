@@ -1,4 +1,5 @@
 #!/bin/sh
+# shellcheck disable=SC2015 # The ok/bad reporters intentionally return success.
 set -eu
 
 PROGRAM=${PROGRAM:-./simple-decision}
@@ -99,4 +100,3 @@ if [ "$fail" -ne 0 ]; then
     exit 1
 fi
 printf '%d checks passed\n' "$pass"
-
