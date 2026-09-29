@@ -108,8 +108,10 @@ can record the same decision twice.
 The log and lock path themselves must not be symbolic links. Parent-directory
 symbolic links are not rejected. Readers do not take the writer lock: atomic
 rename means they see either the previous complete file or the next complete
-file. A new log's permissions respect the process umask; later transactions
-preserve the existing log's permission bits.
+file. A new log's permissions respect the process umask. Later transactions
+preserve the existing owner/group/other `rwx` bits but deliberately clear
+set-user-ID, set-group-ID, and sticky bits rather than propagating privilege
+metadata to the replacement file.
 
 ## Limits
 

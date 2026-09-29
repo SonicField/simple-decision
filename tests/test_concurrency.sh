@@ -120,6 +120,13 @@ mode=$(stat -c %a "$log" 2>/dev/null || stat -f %Lp "$log")
 [ "$mode" = 600 ] && ok 'transaction preserves existing file mode' ||
     bad "file mode changed to $mode"
 
+chmod 2750 "$log"
+$PROGRAM add "$log" 'Clear special mode' --participants=Test \
+    --rationale='Do not propagate privilege metadata.' >/dev/null
+mode=$(stat -c %a "$log" 2>/dev/null || stat -f %Lp "$log")
+[ "$mode" = 750 ] && ok 'transaction preserves rwx bits but clears special bits' ||
+    bad "special-bit policy produced mode $mode"
+
 lock_log="$tmp/lock-link.md"
 touch "$tmp/lock-target"
 ln -s "$tmp/lock-target" "$lock_log.lock"

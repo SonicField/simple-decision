@@ -89,7 +89,7 @@ make analyze    # GCC static analyser
 
 Builds enable `-Wall -Wextra -Wshadow -Werror`. Tests challenge concurrent ID
 allocation, interrupted and failed transactions, malformed Markdown, invalid
-links, Unicode, symbolic links, permission preservation, and command errors.
+links, Unicode, symbolic links, permission policy, and command errors.
 
 ## Deliberate limitations
 
@@ -101,6 +101,8 @@ links, Unicode, symbolic links, permission preservation, and command errors.
 - There is no automatic archive or retention policy.
 - Advisory locking coordinates `simple-decision` writers, not unrelated tools
   that ignore the lock file.
+- Ordinary owner/group/other permission bits are preserved across updates;
+  special set-user-ID, set-group-ID, and sticky bits are cleared.
 - Parent-directory symbolic links are allowed; the log and lock paths
   themselves are rejected when they are symbolic links.
 - Unicode is validated but not normalised, so visually similar strings can
