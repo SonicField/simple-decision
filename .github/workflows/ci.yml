@@ -65,8 +65,11 @@ jobs:
         run: |
           stage=$(mktemp -d)
           make install DESTDIR="$stage"
-          test "$("$stage/usr/local/bin/simple-decision" version)" = \
-            "simple-decision 0.1.0"
+          installed="$stage/usr/local/bin/simple-decision"
+          test "$("$installed" version)" = "simple-decision 0.1.0"
+          test "$("$installed" add "$stage/smoke.md" "Install smoke" \
+            --participants=CI --rationale="Exercise installed workflow")" = "D-1"
+          test "$("$installed" check "$stage/smoke.md")" = "OK: 1 decisions"
 
   sanitizers:
     name: ASan and UBSan / Ubuntu x86-64
@@ -91,4 +94,3 @@ jobs:
         run: make analyze CC=gcc
       - name: Check portable shell scripts
         run: shellcheck tests/*.sh
-
