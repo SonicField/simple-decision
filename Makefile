@@ -23,6 +23,7 @@ $(TARGET): $(SOURCES) $(HEADERS)
 
 test: all
 	PROGRAM=./$(TARGET) sh tests/test_add.sh
+	PROGRAM=./$(TARGET) sh tests/test_query.sh
 
 install: $(TARGET)
 	install -d "$(DESTDIR)$(BINDIR)"
@@ -32,6 +33,7 @@ sanitize:
 	$(MAKE) clean
 	$(MAKE) CFLAGS='-O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer' all
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_add.sh
+	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_query.sh
 
 $(BUILD_DIR):
 	mkdir -p $@
@@ -43,4 +45,3 @@ analyze: | $(BUILD_DIR)
 clean:
 	rm -f $(TARGET)
 	rm -rf $(BUILD_DIR)
-

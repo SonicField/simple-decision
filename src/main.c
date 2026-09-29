@@ -117,6 +117,97 @@ static int command_add(int argc, char **argv)
     return result;
 }
 
+static int validate_log_path(const char *path)
+{
+    return sd_validate_text(path, SD_MAX_PATH - 1, 0, "log path");
+}
+
+static int command_check(int argc, char **argv)
+{
+    if (argc != 3) {
+        fprintf(stderr, "simple-decision: check requires exactly one LOG\n");
+        return SD_BAD_ARGS;
+    }
+    if (validate_log_path(argv[2]) != SD_OK) return SD_BAD_ARGS;
+    sd_log log;
+    int result = sd_load(argv[2], 0, &log);
+    if (result != SD_OK) return result;
+    if (printf("OK: %zu decisions\n", log.count) < 0) result = SD_ERROR;
+    sd_log_free(&log);
+    if (result != SD_OK)
+        fprintf(stderr, "simple-decision: cannot write check result\n");
+    return result;
+}
+
+static int command_list(int argc, char **argv)
+{
+    if (argc < 3 || argc > 4) {
+        fprintf(stderr,
+                "simple-decision: list requires LOG and optional --status=STATUS\n");
+        return SD_BAD_ARGS;
+    }
+    if (validate_log_path(argv[2]) != SD_OK) return SD_BAD_ARGS;
+    const char *status = NULL;
+    if (argc == 4) {
+        if (strncmp(argv[3], "--status=", 9) != 0) {
+            fprintf(stderr, "simple-decision: unknown option '%s'\n", argv[3]);
+            return SD_BAD_ARGS;
+        }
+        status = argv[3] + 9;
+        if (!sd_valid_status(status)) {
+            fprintf(stderr, "simple-decision: unknown status '%s'\n", status);
+            return SD_BAD_ARGS;
+        }
+    }
+    sd_log log;
+    int result = sd_load(argv[2], 0, &log);
+    if (result != SD_OK) return result;
+    for (size_t i = 0; i < log.count; i++) {
+        sd_entry *entry = &log.entries[i];
+        if (status != NULL && strcmp(status, entry->status) != 0) continue;
+        if (printf("D-%" PRIu64 "\t%s\t%s\n", entry->id, entry->status,
+                   entry->summary) < 0) {
+            fprintf(stderr, "simple-decision: cannot write list output\n");
+            result = SD_ERROR;
+            break;
+        }
+    }
+    sd_log_free(&log);
+    return result;
+}
+
+static int command_show(int argc, char **argv)
+{
+    if (argc != 4) {
+        fprintf(stderr, "simple-decision: show requires LOG and ID\n");
+        return SD_BAD_ARGS;
+    }
+    if (validate_log_path(argv[2]) != SD_OK) return SD_BAD_ARGS;
+    uint64_t wanted;
+    if (!sd_parse_id(argv[3], &wanted)) {
+        fprintf(stderr, "simple-decision: invalid decision ID '%s'\n", argv[3]);
+        return SD_BAD_ARGS;
+    }
+    sd_log log;
+    int result = sd_load(argv[2], 0, &log);
+    if (result != SD_OK) return result;
+    for (size_t i = 0; i < log.count; i++) {
+        if (log.entries[i].id == wanted) {
+            sd_print_entry(stdout, &log.entries[i]);
+            if (ferror(stdout)) {
+                fprintf(stderr, "simple-decision: cannot write decision output\n");
+                result = SD_ERROR;
+            }
+            sd_log_free(&log);
+            return result;
+        }
+    }
+    fprintf(stderr, "simple-decision: decision D-%" PRIu64 " not found\n",
+            wanted);
+    sd_log_free(&log);
+    return SD_NOT_FOUND;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
@@ -133,7 +224,9 @@ int main(int argc, char **argv)
         return SD_OK;
     }
     if (strcmp(argv[1], "add") == 0) return command_add(argc, argv);
+    if (strcmp(argv[1], "check") == 0) return command_check(argc, argv);
+    if (strcmp(argv[1], "list") == 0) return command_list(argc, argv);
+    if (strcmp(argv[1], "show") == 0) return command_show(argc, argv);
     fprintf(stderr, "simple-decision: unknown command '%s'\n", argv[1]);
     return SD_BAD_ARGS;
 }
-
