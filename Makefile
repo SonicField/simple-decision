@@ -14,6 +14,7 @@ SOURCES = src/main.c src/decision.c
 HEADERS = src/decision.h
 BUILD_DIR = build
 TEST_TARGET = $(BUILD_DIR)/simple-decision-test
+LIMIT_TARGET = $(BUILD_DIR)/simple-decision-small-limit
 
 .PHONY: all clean install test test-docs sanitize analyze
 
@@ -25,11 +26,14 @@ $(TARGET): $(SOURCES) $(HEADERS)
 $(TEST_TARGET): $(SOURCES) $(HEADERS) | $(BUILD_DIR)
 	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -DSIMPLE_DECISION_TESTING -o $@ $(SOURCES)
 
-test: all $(TEST_TARGET)
+$(LIMIT_TARGET): $(SOURCES) $(HEADERS) | $(BUILD_DIR)
+	$(CC) $(CPPFLAGS) $(ALL_CFLAGS) -DSD_MAX_LOG_BYTES=4096u -o $@ $(SOURCES)
+
+test: all $(TEST_TARGET) $(LIMIT_TARGET)
 	PROGRAM=./$(TARGET) sh tests/test_add.sh
 	PROGRAM=./$(TARGET) sh tests/test_query.sh
 	PROGRAM=./$(TARGET) TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
-	PROGRAM=./$(TARGET) sh tests/test_limits.sh
+	PROGRAM=./$(TARGET) LIMIT_PROGRAM=./$(LIMIT_TARGET) sh tests/test_limits.sh
 	$(MAKE) test-docs
 
 test-docs: all
@@ -41,12 +45,14 @@ install: $(TARGET)
 
 sanitize:
 	$(MAKE) clean
-	$(MAKE) CFLAGS='-O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer' all $(TEST_TARGET)
+	$(MAKE) CFLAGS='-O1 -g3 -fsanitize=address,undefined -fno-omit-frame-pointer' \
+		all $(TEST_TARGET) $(LIMIT_TARGET)
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_add.sh
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_query.sh
 	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) \
 		TEST_PROGRAM=./$(TEST_TARGET) sh tests/test_concurrency.sh
-	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) sh tests/test_limits.sh
+	ASAN_OPTIONS=detect_leaks=1 PROGRAM=./$(TARGET) \
+		LIMIT_PROGRAM=./$(LIMIT_TARGET) sh tests/test_limits.sh
 
 $(BUILD_DIR):
 	mkdir -p $@

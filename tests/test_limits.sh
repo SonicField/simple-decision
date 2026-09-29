@@ -3,6 +3,7 @@
 set -eu
 
 PROGRAM=${PROGRAM:-./simple-decision}
+LIMIT_PROGRAM=${LIMIT_PROGRAM:-./build/simple-decision-small-limit}
 tmp=${TMPDIR:-/tmp}/simple-decision-limits.$$
 mkdir -p "$tmp"
 trap 'rm -rf "$tmp"' EXIT HUP INT TERM
@@ -26,6 +27,36 @@ summary_1023=$(awk 'BEGIN { for (i=0; i<1023; i++) printf "s" }')
 summary_1024="${summary_1023}s"
 field_2047=$(awk 'BEGIN { for (i=0; i<2047; i++) printf "p" }')
 field_2048="${field_2047}p"
+
+limit_log="$tmp/limit-boundary.md"
+"$LIMIT_PROGRAM" add "$limit_log" Seed --participants=Test \
+    --rationale='A valid starting log.' >/dev/null
+
+exact_log="$tmp/exact-limit.md"
+cp "$limit_log" "$exact_log"
+probe_log="$tmp/exact-probe.md"
+cp "$limit_log" "$probe_log"
+base_size=$(wc -c <"$probe_log" | tr -d ' ')
+"$PROGRAM" add "$probe_log" "$summary_1023" \
+    "--participants=$field_2047" --rationale=x >/dev/null
+probe_size=$(wc -c <"$probe_log" | tr -d ' ')
+extra_rationale=$((4096 - base_size - (probe_size - base_size)))
+exact_rationale=$(awk -v count="$((extra_rationale + 1))" \
+    'BEGIN { for (i=0; i<count; i++) printf "r" }')
+run_status 0 "$LIMIT_PROGRAM" add "$exact_log" "$summary_1023" \
+    "--participants=$field_2047" "--rationale=$exact_rationale"
+[ "$(wc -c <"$exact_log" | tr -d ' ')" -eq 4096 ] &&
+    ok 'append may produce a log exactly at the size limit' ||
+    bad 'exact-limit append produced the wrong size'
+run_status 0 "$LIMIT_PROGRAM" check "$exact_log"
+
+cp "$limit_log" "$tmp/limit-before.md"
+run_status 1 "$LIMIT_PROGRAM" add "$limit_log" "$summary_1023" \
+    "--participants=$field_2047" "--rationale=$field_2047"
+cmp -s "$tmp/limit-before.md" "$limit_log" &&
+    ok 'over-limit append leaves valid log byte-identical' ||
+    bad 'over-limit append changed the live log'
+run_status 0 "$LIMIT_PROGRAM" check "$limit_log"
 
 run_status 0 "$PROGRAM" add "$tmp/max-summary.md" "$summary_1023" \
     --participants=Test --rationale=Why

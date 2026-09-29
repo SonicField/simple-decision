@@ -111,6 +111,10 @@ preserve the existing log's permission bits.
 The program processes bytes and validates UTF-8; it does not normalise Unicode.
 Visually similar strings may therefore remain distinct.
 
+`add` rejects an entry when the existing bytes plus the complete formatted
+entry would exceed 64 MiB. The rejection occurs before creating a transaction,
+and the live log remains byte-identical.
+
 ## Exit status
 
 | Status | Meaning |

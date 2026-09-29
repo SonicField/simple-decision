@@ -8,7 +8,9 @@
 #define SD_MAX_PATH 4096
 #define SD_MAX_SUMMARY 1024
 #define SD_MAX_FIELD 2048
+#ifndef SD_MAX_LOG_BYTES
 #define SD_MAX_LOG_BYTES (64u * 1024u * 1024u)
+#endif
 
 enum {
     SD_OK = 0,
@@ -46,4 +48,3 @@ int sd_add(const char *path, const sd_entry *entry, uint64_t *new_id);
 void sd_print_entry(FILE *stream, const sd_entry *entry);
 
 #endif
-

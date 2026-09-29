@@ -599,7 +599,17 @@ int sd_add(const char *path, const sd_entry *entry, uint64_t *new_id)
     }
     const char *base = log.raw == NULL ? header : log.raw;
     size_t base_length = log.raw == NULL ? sizeof(header) - 1 : log.raw_len;
-    result = commit_log(path, base, base_length, addition, (size_t)length);
+    size_t addition_length = (size_t)length;
+    const size_t maximum = (size_t)SD_MAX_LOG_BYTES;
+    if (base_length > maximum || addition_length > maximum - base_length) {
+        fprintf(stderr,
+                "simple-decision: resulting log would exceed the %zu-byte limit\n",
+                maximum);
+        sd_log_free(&log);
+        unlock_log(lock_fd);
+        return SD_ERROR;
+    }
+    result = commit_log(path, base, base_length, addition, addition_length);
     sd_log_free(&log);
     unlock_log(lock_fd);
     if (result == SD_OK) *new_id = id;
