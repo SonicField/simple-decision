@@ -34,7 +34,7 @@ Observed locally on Linux 6.16, ARM64, with GCC 11.5:
 
 | Command | Observed result |
 |---|---|
-| `make test CC=gcc` | Passed 74 CLI/adversarial checks plus documentation checks |
+| `make test CC=gcc` | Passed 75 CLI/adversarial checks plus documentation checks |
 | `make analyze CC=gcc` | GCC `-fanalyzer` completed with warnings treated as errors |
 | `shellcheck tests/*.sh` | Completed without findings |
 | `make sanitize CC=gcc` | ASan and UBSan suite passed, including 64 concurrent writers |
@@ -51,7 +51,8 @@ The tests specifically observed:
 - malformed, truncated, reordered, duplicate-ID, bad-link, NUL, and invalid
   UTF-8 logs were rejected;
 - boundary-length fields, ID exhaustion, symbolic links, umask handling, and
-  permission preservation behaved as documented.
+  permission preservation behaved as documented;
+- an over-limit sparse input was rejected from its file size before parsing.
 
 ## Not yet observed
 
@@ -63,4 +64,3 @@ The tests specifically observed:
   six-platform GitHub Actions matrix has not run at this commit.
 - No immediate-power-loss test was performed. Filesystem and hardware write
   caches remain outside the scope of process-level failure injection.
-

@@ -84,6 +84,9 @@ run_status 2 "$PROGRAM" check "$tmp/trailing.md"
 printf '# Decision Log\nFormat: simple-decision/1\n\n---\n### D-1 Bad UTF-8\n- **Participants:** A\377\n- **Status:** decided\n- **Supersedes:** none\n- **Risk tags:** none\n- **Artefacts:** none\n- **Rationale:** Why\n' >"$tmp/bad-log-utf8.md"
 run_status 2 "$PROGRAM" check "$tmp/bad-log-utf8.md"
 
+dd if=/dev/zero of="$tmp/too-large.md" bs=1 count=1 seek=67108864 2>/dev/null
+run_status 1 "$PROGRAM" check "$tmp/too-large.md"
+
 if [ "$failures" -ne 0 ]; then
     printf '%d checks passed, %d failed\n' "$checks" "$failures" >&2
     exit 1
