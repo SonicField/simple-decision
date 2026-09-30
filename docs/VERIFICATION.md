@@ -72,7 +72,8 @@ The tests specifically observed:
   attempt stopped with `clang: No such file or directory`.
 - `actionlint` was not installed, so the workflow received manual inspection
   but no local actionlint result.
-- The repository was deliberately not published or pushed. Consequently, the
-  six-platform GitHub Actions matrix has not run at this commit.
+- The hosted matrix exposed a BSD `sed` portability error in a test fixture;
+  the script now uses POSIX multiline command blocks. The corrected commit has
+  not yet completed the hosted matrix.
 - No immediate-power-loss test was performed. Filesystem and hardware write
   caches remain outside the scope of process-level failure injection.

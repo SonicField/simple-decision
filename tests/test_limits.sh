@@ -108,8 +108,16 @@ sed 's#Format: simple-decision/1#Format: simple-decision/2#' \
     "$tmp/max-summary.md" >"$tmp/version.md"
 run_status 2 "$PROGRAM" check "$tmp/version.md"
 
-sed '/^- \*\*Status:\*\*/{h;d}; /^- \*\*Supersedes:\*\*/{p;x}' \
-    "$tmp/max-summary.md" >"$tmp/reordered.md"
+sed -e '
+/^- \*\*Status:\*\*/ {
+    h
+    d
+}
+/^- \*\*Supersedes:\*\*/ {
+    p
+    x
+}
+' "$tmp/max-summary.md" >"$tmp/reordered.md"
 run_status 2 "$PROGRAM" check "$tmp/reordered.md"
 
 cp "$tmp/max-summary.md" "$tmp/trailing.md"
