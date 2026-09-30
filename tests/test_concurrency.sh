@@ -89,6 +89,10 @@ while [ ! -f "$marker" ] && [ "$attempt" -lt 500 ]; do
     attempt=$((attempt + 1))
 done
 if [ -f "$marker" ]; then
+    paused_result=$($PROGRAM check "$log")
+    [ "$paused_result" = 'OK: 65 decisions' ] &&
+        ok 'reader sees the complete previous log before rename' ||
+        bad "reader observed unexpected pre-rename state: $paused_result"
     kill -KILL "$interrupted_pid"
     set +e
     wait "$interrupted_pid" 2>/dev/null
@@ -133,6 +137,28 @@ ln -s "$tmp/lock-target" "$lock_log.lock"
 run_status 1 "$PROGRAM" add "$lock_log" Summary --participants=Test --rationale=Why
 [ ! -e "$lock_log" ] && ok 'symbolic-link lock prevents log creation' ||
     bad 'log was created through a symbolic-link lock'
+
+symlink_target="$tmp/symlink-target.md"
+$PROGRAM add "$symlink_target" Original --participants=Test --rationale=Why \
+    >/dev/null
+cp "$symlink_target" "$tmp/symlink-target-before.md"
+ln -s "$symlink_target" "$tmp/log-link.md"
+run_status 1 "$PROGRAM" add "$tmp/log-link.md" Replacement \
+    --participants=Test --rationale=Why
+cmp -s "$tmp/symlink-target-before.md" "$symlink_target" &&
+    ok 'symbolic-link log is rejected without changing its target' ||
+    bad 'symbolic-link log changed its target'
+
+mkdir "$tmp/real-parent"
+ln -s "$tmp/real-parent" "$tmp/linked-parent"
+parent_link_id=$($PROGRAM add "$tmp/linked-parent/decision.md" Parent-link \
+    --participants=Test --rationale=Why)
+[ "$parent_link_id" = D-1 ] && ok 'parent-directory symbolic link is allowed' ||
+    bad "parent-directory symbolic link returned $parent_link_id"
+$PROGRAM check "$tmp/real-parent/decision.md" >"$tmp/parent-check"
+grep -q '^OK: 1 decisions$' "$tmp/parent-check" &&
+    ok 'parent-directory symbolic link produces a valid target log' ||
+    bad 'parent-directory symbolic link target is invalid'
 
 run_status 1 "$PROGRAM" add "$tmp/missing/decision.md" Summary \
     --participants=Test --rationale=Why

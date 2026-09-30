@@ -68,7 +68,8 @@ Format: simple-decision/1
 - IDs increase strictly in file order. `add` assigns one more than the largest
   existing ID while holding the log lock.
 - Each field occupies exactly one line in the order shown above.
-- Summary, participants, and rationale must not be empty.
+- Every field value must not be empty. Optional CLI fields that are omitted are
+  written as `none`.
 - Text must be valid UTF-8 and must not contain ASCII control characters.
 - A supersedes value is either `none` or the ID of an earlier entry.
 - The file must end with a newline.

@@ -24,5 +24,10 @@ for command in add list show check; do
 done
 [ "$("$PROGRAM" version)" = 'simple-decision 0.1.0' ]
 
-printf 'documentation checks passed\n'
+for alias in --help -h; do
+    "$PROGRAM" "$alias" >"$tmp/help-alias"
+    cmp -s "$tmp/help" "$tmp/help-alias"
+done
+[ "$("$PROGRAM" --version)" = 'simple-decision 0.1.0' ]
 
+printf 'documentation checks passed\n'

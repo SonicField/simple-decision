@@ -90,6 +90,8 @@ make analyze    # GCC static analyser
 Builds enable `-Wall -Wextra -Wshadow -Werror`. Tests challenge concurrent ID
 allocation, interrupted and failed transactions, malformed Markdown, invalid
 links, Unicode, symbolic links, permission policy, and command errors.
+The contract-to-test mapping is recorded in
+[`docs/TESTING.md`](docs/TESTING.md).
 
 ## Deliberate limitations
 

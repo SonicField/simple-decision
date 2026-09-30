@@ -30,11 +30,11 @@ was not modified.
 
 ## Standalone evidence
 
-Observed locally on Linux 6.16, ARM64, with GCC 11.5:
+Observed locally on 2026-09-30 using Linux 6.16, ARM64, and GCC 11.5:
 
 | Command | Observed result |
 |---|---|
-| `make test CC=gcc` | Passed 97 CLI/adversarial checks plus documentation checks |
+| `make test CC=gcc` | Passed 106 CLI/adversarial checks plus documentation checks |
 | `make analyze CC=gcc` | GCC `-fanalyzer` completed with warnings treated as errors |
 | `shellcheck tests/*.sh` | Completed without findings |
 | `make sanitize CC=gcc` | ASan and UBSan suite passed, including 64 concurrent writers |
@@ -62,6 +62,9 @@ The tests specifically observed:
   a real pipe with no reader returned status 1 rather than dying from SIGPIPE;
 - help/version commands and their long-option aliases rejected trailing
   arguments with usage status 4.
+- the `reversed` status, empty optional-field rejection, log-path and
+  parent-directory symbolic-link policies, and a reader during a paused
+  pre-rename transaction behaved as documented.
 
 ## Not yet observed
 

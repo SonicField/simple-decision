@@ -47,6 +47,15 @@ printf 'D-2\taccepted-risk\tBeta\n' >"$tmp/want-filtered"
 cmp -s "$tmp/filtered" "$tmp/want-filtered" && ok 'status filter is exact' ||
     bad 'status filter output differs'
 
+reversed_log="$tmp/reversed.md"
+$PROGRAM add "$reversed_log" Original --participants=Alex --rationale=One >/dev/null
+$PROGRAM add "$reversed_log" Replacement --participants=Sam --rationale=Two \
+    --status=reversed --supersedes=D-1 >/dev/null
+reversed=$($PROGRAM list "$reversed_log" --status=reversed)
+[ "$reversed" = "D-2$(printf '\t')reversed$(printf '\t')Replacement" ] &&
+    ok 'reversed status is accepted and filterable' ||
+    bad "unexpected reversed-status output: $reversed"
+
 $PROGRAM show "$log" D-2 >"$tmp/show"
 printf '%s\n' \
     '### D-2 Beta' \
@@ -85,6 +94,10 @@ run_status 2 "$PROGRAM" check "$tmp/missing-field.md"
 
 sed 's/- \*\*Supersedes:\*\* D-2/- **Supersedes:** D-99/' "$log" >"$tmp/bad-link.md"
 run_status 2 "$PROGRAM" check "$tmp/bad-link.md"
+
+sed 's/- \*\*Risk tags:\*\* latency/- **Risk tags:** /' \
+    "$log" >"$tmp/empty-optional.md"
+run_status 2 "$PROGRAM" check "$tmp/empty-optional.md"
 
 sed '$d' "$log" >"$tmp/truncated.md"
 printf '%s' '- **Rationale:** Three' >>"$tmp/truncated.md"

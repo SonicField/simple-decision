@@ -68,6 +68,10 @@ run_status 4 "$PROGRAM" add "$tmp/long-field.md" Summary \
     "--participants=$field_2048" --rationale=Why
 run_status 4 "$PROGRAM" add "$tmp/empty-option.md" Summary \
     --participants= --rationale=Why
+run_status 4 "$PROGRAM" add "$tmp/empty-risks.md" Summary \
+    --participants=Test --rationale=Why --risk-tags=
+run_status 4 "$PROGRAM" add "$tmp/empty-artefacts.md" Summary \
+    --participants=Test --rationale=Why --artefacts=
 
 carriage_return=$(printf 'bad\rvalue')
 delete_character=$(printf 'bad\177value')
